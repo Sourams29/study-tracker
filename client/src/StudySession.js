@@ -8,14 +8,15 @@ function StudySession() {
   const [seconds, setSeconds] = useState(0);
   const [idleTime, setIdleTime] = useState(0);
   const [tabSwitches, setTabSwitches] = useState(0);
-  const [aiFeedback, setAiFeedback] = useState(""); // ✅ moved here
+  const [aiFeedback, setAiFeedback] = useState("");
+
+  // ✅ Backend URL from environment
+  const API = process.env.REACT_APP_API_URL;
 
   // 🔥 START SESSION
   const startSession = async () => {
-    console.log("Start button clicked");
-
     try {
-      const res = await axios.post("http://localhost:5000/api/session/start", {
+      const res = await axios.post(`${API}/api/session/start`, {
         userId: "69f9880916bceaf2a5261e3d"
       });
 
@@ -25,7 +26,7 @@ function StudySession() {
       setSeconds(0);
       setIdleTime(0);
       setTabSwitches(0);
-      setAiFeedback(""); // reset
+      setAiFeedback("");
 
     } catch (err) {
       console.error("Start error:", err);
@@ -33,24 +34,31 @@ function StudySession() {
     }
   };
 
+  // 🧠 FOCUS SCORE
+  const focusScore =
+    seconds > 0
+      ? Math.max(
+          0,
+          Math.min(100, ((seconds - idleTime) / seconds) * 100)
+        ).toFixed(2)
+      : 0;
+
   // 🔥 END SESSION
   const endSession = async () => {
-    console.log("End button clicked");
-
     if (!sessionId) {
       setStatus("Start session first ⚠️");
       return;
     }
 
     try {
-      await axios.post("http://localhost:5000/api/session/end", {
+      await axios.post(`${API}/api/session/end`, {
         sessionId
       });
 
       setStatus("Session Ended 🛑");
 
       // 🔥 CALL AI
-      const res = await axios.post("http://localhost:5000/api/session/feedback", {
+      const res = await axios.post(`${API}/api/session/feedback`, {
         focusScore,
         idleTime,
         tabSwitches,
@@ -121,15 +129,6 @@ function StudySession() {
     };
   }, [status]);
 
-  // 🧠 FOCUS SCORE
-  const focusScore =
-    seconds > 0
-      ? Math.max(
-          0,
-          Math.min(100, ((seconds - idleTime) / seconds) * 100)
-        ).toFixed(2)
-      : 0;
-
   // 💡 INSIGHT
   let insight = "";
 
@@ -142,41 +141,51 @@ function StudySession() {
   }
 
   return (
-  <div className="min-h-screen bg-slate-900 text-white p-8">
+    <div className="min-h-screen bg-slate-900 text-white p-8">
 
-    <h2 className="text-3xl font-bold text-cyan-400 mb-6">
-      Study Tracker
-    </h2>
+      <h2 className="text-3xl font-bold text-cyan-400 mb-6">
+        Study Tracker
+      </h2>
 
-    {/* BUTTONS */}
-    <div className="flex gap-4 mb-6">
-      <button
-        onClick={startSession}
-        className="bg-green-500 px-5 py-2 rounded-lg hover:bg-green-600"
-      >
-        ▶ Start
-      </button>
+      {/* BUTTONS */}
+      <div className="flex gap-4 mb-6">
+        <button
+          onClick={startSession}
+          className="bg-green-500 px-5 py-2 rounded-lg hover:bg-green-600"
+        >
+          ▶ Start
+        </button>
 
-      <button
-        onClick={endSession}
-        className="bg-red-500 px-5 py-2 rounded-lg hover:bg-red-600"
-      >
-        ⏹ End
-      </button>
+        <button
+          onClick={endSession}
+          className="bg-red-500 px-5 py-2 rounded-lg hover:bg-red-600"
+        >
+          ⏹ End
+        </button>
+      </div>
+
+      {/* STATS */}
+      <div className="space-y-2 text-lg">
+        <p>Status: {status}</p>
+        <p>Time: {seconds}s</p>
+        <p>Idle Time: {idleTime}s</p>
+        <p>Tab Switches: {tabSwitches}</p>
+        <p>Focus Score: {focusScore}%</p>
+        <p>Insight: {insight}</p>
+
+        {/* ✅ FIX: aiFeedback is now USED */}
+        {aiFeedback && (
+          <div className="mt-4 p-4 bg-gray-800 rounded-lg">
+            <h3 className="text-xl font-semibold text-yellow-400">
+              AI Feedback
+            </h3>
+            <p>{aiFeedback}</p>
+          </div>
+        )}
+      </div>
+
     </div>
-
-    {/* STATS */}
-    <div className="space-y-2 text-lg">
-      <p>Status: {status}</p>
-      <p>Time: {seconds}s</p>
-      <p>Idle Time: {idleTime}s</p>
-      <p>Tab Switches: {tabSwitches}</p>
-      <p>Focus Score: {focusScore}%</p>
-      <p>Insight: {insight}</p>
-    </div>
-
-  </div>
-);
+  );
 }
 
 export default StudySession;
