@@ -10,15 +10,19 @@ function StudySession() {
   const [tabSwitches, setTabSwitches] = useState(0);
   const [aiFeedback, setAiFeedback] = useState("");
 
-  // ✅ Backend URL from environment
-  const API = process.env.REACT_APP_API_URL;
+  // ✅ HARD-CODED BACKEND (stable for now)
+  const API = "https://study-tracker-api-t603.onrender.com";
 
   // 🔥 START SESSION
   const startSession = async () => {
+    console.log("START CLICKED");
+
     try {
       const res = await axios.post(`${API}/api/session/start`, {
         userId: "69f9880916bceaf2a5261e3d"
       });
+
+      console.log("START RESPONSE:", res.data);
 
       setSessionId(res.data._id);
       setStatus("Session Running ✅");
@@ -29,7 +33,7 @@ function StudySession() {
       setAiFeedback("");
 
     } catch (err) {
-      console.error("Start error:", err);
+      console.error("START ERROR:", err);
       setStatus("Error starting session ❌");
     }
   };
@@ -45,6 +49,8 @@ function StudySession() {
 
   // 🔥 END SESSION
   const endSession = async () => {
+    console.log("END CLICKED");
+
     if (!sessionId) {
       setStatus("Start session first ⚠️");
       return;
@@ -57,7 +63,6 @@ function StudySession() {
 
       setStatus("Session Ended 🛑");
 
-      // 🔥 CALL AI
       const res = await axios.post(`${API}/api/session/feedback`, {
         focusScore,
         idleTime,
@@ -65,10 +70,12 @@ function StudySession() {
         seconds
       });
 
+      console.log("FEEDBACK:", res.data);
+
       setAiFeedback(res.data.feedback);
 
     } catch (err) {
-      console.error("End error:", err);
+      console.error("END ERROR:", err);
       setStatus("Error ending session ❌");
     }
   };
@@ -147,7 +154,15 @@ function StudySession() {
         Study Tracker
       </h2>
 
-      {/* BUTTONS */}
+      {/* TEST BUTTON (for debugging) */}
+      <button
+        onClick={() => alert("Button Working ✅")}
+        className="bg-blue-500 px-4 py-2 rounded mb-4"
+      >
+        Test Button
+      </button>
+
+      {/* MAIN BUTTONS */}
       <div className="flex gap-4 mb-6">
         <button
           onClick={startSession}
@@ -173,7 +188,7 @@ function StudySession() {
         <p>Focus Score: {focusScore}%</p>
         <p>Insight: {insight}</p>
 
-        {/* ✅ FIX: aiFeedback is now USED */}
+        {/* AI Feedback */}
         {aiFeedback && (
           <div className="mt-4 p-4 bg-gray-800 rounded-lg">
             <h3 className="text-xl font-semibold text-yellow-400">
